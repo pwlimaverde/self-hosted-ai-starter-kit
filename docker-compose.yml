@@ -3,6 +3,8 @@ volumes:
   postgres_storage:
   ollama_storage:
   qdrant_storage:
+  waha_sessions:
+  waha_media:
 
 networks:
   demo:
@@ -146,4 +148,28 @@ services:
     <<: *init-ollama
     image: ollama/ollama:rocm
     depends_on:
-     - ollama-gpu-amd
+      - ollama-gpu-amd
+
+  redis:
+    image: redis:latest
+    platform: linux/amd64
+    command: redis-server --requirepass default
+    environment:
+      REDIS_USER: default
+      REDIS_PASSWORD: default
+    ports:
+      - "6379:6379" 
+
+  waha:
+    image: devlikeapro/waha:latest
+    platform: linux/amd64
+    networks: ['demo']
+    environment:
+      WHATSAPP_HOOK_URL: http://n8n:5678/webhook/waha
+      WHATSAPP_DEFAULT_ENGINE: GOWS
+      WHATSAPP_HOOK_EVENTS: message
+    volumes:
+      - waha_sessions:/app/.sessions
+      - waha_media:/app/.media
+    ports:
+      - "3000:3000"
